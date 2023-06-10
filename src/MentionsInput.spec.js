@@ -89,6 +89,59 @@ describe('MentionsInput', () => {
     ).toEqual(data.length + extraData.length)
   })
 
+  it('handles an async data function that executes the callback', () => {
+    function dataFunc(query, callback) {
+      callback(data)
+    }
+
+    const wrapper = mount(
+      <MentionsInput value="@">
+        <Mention trigger="@" data={dataFunc} />
+      </MentionsInput>
+    )
+
+    wrapper.find('textarea').simulate('focus')
+    wrapper.find('textarea').simulate('select', {
+      target: { selectionStart: 1, selectionEnd: 1 },
+    })
+    wrapper
+      .find('textarea')
+      .getDOMNode()
+      .setSelectionRange(1, 1)
+
+    expect(
+      wrapper.find('SuggestionsOverlay').find('Suggestion').length
+    ).toEqual(data.length)
+  })
+
+  it('handles an async data function that returns a promise', async () => {
+    function dataFunc() {
+      return Promise.resolve(data)
+    }
+
+    const wrapper = mount(
+      <MentionsInput value="@">
+        <Mention trigger="@" data={dataFunc} />
+      </MentionsInput>
+    )
+
+    wrapper.find('textarea').simulate('focus')
+    wrapper.find('textarea').simulate('select', {
+      target: { selectionStart: 1, selectionEnd: 1 },
+    })
+    wrapper
+      .find('textarea')
+      .getDOMNode()
+      .setSelectionRange(1, 1)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    wrapper.update()
+
+    expect(
+      wrapper.find('SuggestionsOverlay').find('Suggestion').length
+    ).toEqual(data.length)
+  })
+
   it('should scroll the highlighter in sync with the textarea', () => {
     const wrapper = mount(
       <MentionsInput
